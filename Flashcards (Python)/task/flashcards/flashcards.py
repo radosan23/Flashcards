@@ -1,3 +1,8 @@
+import json
+import os
+import random
+
+
 class DuplicatedData(Exception):
     def __init__(self, d_type, data):
         self.d_type = d_type
@@ -9,22 +14,59 @@ class DuplicatedData(Exception):
 
 
 class Flashcards:
-    def __init__(self, n):
+    def __init__(self):
         self.deck = {}
-        self.make_deck(n)
 
-    def make_deck(self, n):
-        for i in range(1, n + 1):
-            t = input(f'The term for card #{i}:\n')
-            t = self.check_duplicate('term', t)
-            d = input(f'The definition for card #{i}:\n')
-            d = self.check_duplicate('definition', d)
-            self.deck[t] = d
+    def menu(self):
+        while True:
+            cmd = input('Input the action (add, remove, import, export, ask, exit):\n')
+            if cmd == 'exit':
+                print('Bye bye!')
+                break
+            elif cmd == 'add':
+                self.add_card()
+            elif cmd == 'remove':
+                self.remove_card(input('Which card?\n'))
+            elif cmd == 'import':
+                self.import_cards(input('File name:\n'))
+            elif cmd == 'export':
+                self.export_cards(input('File name:\n'))
+            elif cmd == 'ask':
+                self.play(int(input('How many times to ask?\n')))
+
+    def add_card(self):
+        t = input(f'The card:\n')
+        t = self.check_duplicate('card', t)
+        d = input(f'The definition of the card:\n')
+        d = self.check_duplicate('definition', d)
+        self.deck[t] = d
+        print(f'The pair ("{t}":"{d}") has been added.\n')
+
+    def remove_card(self, card):
+        if card in self.deck.keys():
+            self.deck.pop(card)
+            print('The card has been removed.\n')
+        else:
+            print(f'Can\'t remove "{card}": there is no such card.\n')
+
+    def import_cards(self, file):
+        if os.access(file, os.F_OK):
+            with open(file, 'rt') as f:
+                imported = json.loads(f.read())
+                self.deck.update(imported)
+                print(f'{len(imported)} cards have been loaded.\n')
+        else:
+            print('File not found\n')
+
+    def export_cards(self, file):
+        with open(file, 'wt') as f:
+            f.write(json.dumps(self.deck))
+            print(f'{len(self.deck)} cards have been saved.\n')
 
     def check_duplicate(self, d_type, data):
         while True:
             try:
-                if d_type == 'term' and data in self.deck.keys() \
+                if d_type == 'card' and data in self.deck.keys() \
                         or d_type == 'definition' and data in self.deck.values():
                     raise DuplicatedData(d_type, data)
             except DuplicatedData as dupl:
@@ -33,8 +75,8 @@ class Flashcards:
                 break
         return data
 
-    def play(self):
-        for term, definition in self.deck.items():
+    def play(self, n):
+        for term, definition in random.choices(list(self.deck.items()), k=n):
             ans = input(f'Print the definition of "{term}":\n')
             if ans == definition:
                 print('Correct!')
@@ -46,8 +88,8 @@ class Flashcards:
 
 
 def main():
-    game = Flashcards(int(input('Input the number of cards:\n')))
-    game.play()
+    game = Flashcards()
+    game.menu()
 
 
 if __name__ == '__main__':
