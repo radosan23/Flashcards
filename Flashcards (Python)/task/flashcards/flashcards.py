@@ -1,3 +1,4 @@
+import argparse
 import io
 import json
 import os
@@ -18,6 +19,9 @@ class Flashcards:
     def __init__(self):
         self.deck = []
         self.log_buffer = io.StringIO()
+        self.args = self.arguments()
+        if self.args.import_from:
+            self.import_cards(self.args.import_from)
 
     def log_out(self, msg):
         print(msg, file=self.log_buffer)
@@ -29,12 +33,21 @@ class Flashcards:
         print(inp, file=self.log_buffer)
         return inp
 
+    @staticmethod
+    def arguments():
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--import_from')
+        parser.add_argument('--export_to')
+        return parser.parse_args()
+
     def menu(self):
         while True:
             cmd = self.log_in('Input the action '
                               '(add, remove, import, export, ask, exit, log, hardest card, reset stats):\n')
             if cmd == 'exit':
                 self.log_out('Bye bye!')
+                if self.args.export_to:
+                    self.export_cards(self.args.export_to)
                 break
             elif cmd == 'add':
                 self.add_card()
